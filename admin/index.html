@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="ja">
+	<head>
+		<meta charset="UTF-8" />
+		<title>ログイン画面(Tosirukun_8801のにっき)</title>
+	</head>
+	<body>
+		<form name="loginform">
+			<input type="text" name="name" value="UserName" maxlength="15"><br><input type="text" name="password" value="Password">
+		</form>
+		<input type="button" value="Done" onclick="done()">
+		<script>
+			function done(){
+				const username = document.loginform.name.value;
+				if(username != null){
+					location.href = username + ".html";
+
+				}
+			}
+		</script>
+	</body>
+
+</html>

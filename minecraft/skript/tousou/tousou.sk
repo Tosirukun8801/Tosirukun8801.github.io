@@ -1,0 +1,109 @@
+command /run [<text>] [<text>] [<number>] [<number>]:
+	permission: onigokko.admin
+	permission message: あなたは管理者ではありません
+	usage: Usage.txt参照
+	trigger:
+		if arg-1 is "setsp":
+			if arg-2 is "s":
+				set {location.start} to player's location
+				send "<yellow>最初に飛ぶ場所の座標を変更しました!"
+
+			if arg-2 is "s2":
+				set {location.dice} to player's location
+				send "<yellow>さいころを振る人の座標を変更しました!"
+
+			if arg-2 is "o":
+				set {location.oni} to player's location
+				send "<yellow>鬼の座標を変更しました!"
+
+			if arg-2 is "r":
+				set {location.r} to player's location
+				send "<yellow>復活アスレチックの座標を変更しました!"
+
+		if arg-1 is "start":
+			if arg-2 is set:
+				if arg-3 is set:
+					teleport all players to {location.start}
+					delete {player_list::*}
+					set {player_list::*} to all players
+					
+					loop (arg-2 parsed as number) times:
+						set {_p} to random element out of {player_list::*}
+						teleport {_p} to {location.oni}
+						remove {_p} from {player_list::*}
+						set {_p_name} to {_p}
+						delete {_p}
+						set {_tyuusen_message} to {tyuusen_message}
+						replace all "<prefix>" with "%{prefix}%" in {_tyuusen_message}
+						replace all "<player>" with "%{_p_name}%" in {_tyuusen_message}
+						broadcast {_tyuusen_message}
+						add {oni::*} to {_p_name}
+
+					loop all players:
+						Dice(player)
+
+		if arg-1 is "oni":
+			teleport player to {location.oni}
+
+		if arg-1 is "config":
+			if file "plugins\top\config.yml" exists:
+				send "%{prefix}%<white>:<light aqua>コンフィグ読み込み開始....." to player
+				set {prefix} to yml value "-Prefix" from file "plugins\top\config.yml"
+				set {dice_message} to yml value "-Dice_message" from file "plugins\top\config.yml"
+				set {dice_stop_message} to yml value "-Dice_stop_message" from file "plugins\top\config.yml"
+				set {tyuusen_message} to yml value "-oni_message" from file "plugins\top\config.yml"
+				set {dice_max} to yml value "-Dice_max" from file "plugins\top\config.yml"
+				set {welcome_bossbar} to yml value "-Welcome_bossbar" from file "plugins\top\config.yml"
+				send "%{prefix}%<white>:<light aqua>コンフィグ読み込み完了" to player
+
+			else:
+				send "%{prefix}%<white>:<light aqua>コンフィグが存在しないので作成します....." to player
+				create file "plugins\top\config.yml"
+				set file contents of "plugins\top\config.yml" to "鬼ごっこPluginコンフィグ"
+				set yml value "設定用config" from file "plugins\top\config.yml" to ""
+				set yml value "-Prefix" from file "plugins\top\config.yml" to "<light green>[Tosirukun Onigokko PL]"
+				set yml value "-Dice_message" from file "plugins\top\config.yml" to "<light gray><dice>"
+				set yml value "-Dice_stop_message" from file "plugins\top\config.yml" to "<prefix><white>:<light blue><dice><light blue>で止まりました"
+				set yml value "-oni_message" from file "plugins\top\config.yml" to "<prefix><white>:<light green>今回の鬼は<light red><player>です"
+				set yml value "-Dice_max" from file "plugins\top\config.yml" to 6
+				set yml value "-Welcome_bossbar" from file "plugins\top\config.yml" to "<light green>Welcome To Tosirukun's Onigokko Server!"
+				send "%{prefix}%<white>:<light aqua>コンフィグ作成完了"
+
+		if arg-1 is "head":
+			set {dice} to skull of ("I_mundercover" parsed as offline player) named "<light green>さいころ"
+
+function Dice(p:player):
+	set slot 4 of {_p}'s inventory to {dice}
+
+on drop:
+	if event-item is {dice}:
+		delete event-entity
+		set {_time} to random integer from 5 to 10
+		loop 100 times:
+			set {_dice} to random integer from 1 to {dice_max}
+			set {_dice_message} to {dice_message}
+			replace all "<dice>" with "%{_dice}%" in {_dice_message}
+			replace all "<prefix>" with "%{prefix}%" in {_dice_message}
+			replace all "<player>" with player's name in {_dice_message}
+			send {_dice_message} to player
+			set {_count} to random integer from 1 to 2
+			set {_time} to ({_time} - {_removetime}) / 5
+			set {_waittime} to {_time} + 0.3
+			wait "%{_waittime}% seconds" parsed as timespan
+			if {_time} <= 0.0001:
+				set {_dice_stop_message} to {dice_stop_message}
+				replace all "<dice>" with "%{_dice}%" in {_dice_stop_message}
+				replace all "<prefix>" with "%{prefix}%" in {_dice_stop_message}
+				replace all "<player>" with player's name in {_dice_stop_message}
+				broadcast {_dice_stop_message}
+				stop
+
+every second:
+	loop all players:
+		set {_bossbar} to new bar
+		add loop-player to bar {_bossbar}
+		show bar {_bossbar}
+		set title of bar {_bossbar} to "%{welcome_bossbar}%"
+		set color of bar {_bossbar} to yellow
+		wait second
+		hide bar {_bossbar}
